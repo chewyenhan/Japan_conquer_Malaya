@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>马来亚1941：抉择的十字路口</title>
+    <style>
+        :root {
+            --bg: #1a1a0f;
+            --panel: #1e2319;
+            --gold: #c9a44c;
+            --gold-light: #e4c76b;
+            --red: #8b1c1c;
+            --red-bright: #c0392b;
+            --cream: #f4ecd8;
+            --text: #d4c8a8;
+            --text-dim: #8a8060;
+            --card: #252a1e;
+            --card-hover: #2e3525;
+            --border: #3a3a28;
+            --japan-red: #bc002d;
+            --british-blue: #1a3a5c;
+            --success: #4a7c46;
+            --danger: #a04040;
+            --info: #5a7a9a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Noto Serif SC", "SimSun", "STSong", Georgia, "Times New Roman", serif;
+            min-height: 100vh;
+            line-height: 1.7;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                /* Subtle grid lines — map feel */
+                linear-gradient(rgba(201,164,76,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201,164,76,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        body::after {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(ellipse at 50% 0%, rgba(201,164,76,0.08) 0%, transparent 55%),
+                        radial-gradient(ellipse at 80% 100%, rgba(201,164,76,0.04) 0%, transparent 50%);
+        }
+        #app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 28px 0 16px;
+            border-bottom: 1px solid rgba(201,164,76,0.2);
+            margin-bottom: 24px;
+        }
+        .header h1 { color: var(--gold); font-size: 3.4em; letter-spacing: 0.06em; margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .header .subtitle { color: var(--text-dim); font-size: 1.3em; letter-spacing: 0.1em; }
+
+        /* Panel system */
+        .panel { display: none; flex: 1; }
+        .panel.active { display: block; }
+
+        /* Start Screen */
+        .start-screen {
+            text-align: center;
+            padding: 56px 36px;
+            background: linear-gradient(180deg, rgba(30,35,25,0.95) 0%, var(--panel) 100%);
+            border: 1px solid rgba(201,164,76,0.4);
+            border-radius: 24px;
+            box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 80px rgba(201,164,76,0.05);
+            position: relative; overflow: hidden;
+        }
+        .start-screen::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        .start-screen .icon-main { font-size: 6em; margin-bottom: 14px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+        .start-screen h2 { color: var(--gold-light); font-size: 2.6em; margin-bottom: 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .start-screen .tagline { color: var(--text-dim); font-size: 1.3em; margin-bottom: 32px; }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 18px 44px;
+            border: 2px solid rgba(201,164,76,0.6);
+            background: transparent;
+            color: var(--gold);
+            font-family: inherit;
+            font-size: 1.3em;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.04em;
+            position: relative; overflow: hidden;
+        }
+        .btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse at center, rgba(201,164,76,0.15) 0%, transparent 70%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .btn:hover::after { opacity: 1; }
+        .btn-primary { background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 100%); color: var(--bg); font-weight: bold; font-size: 1.4em; border-color: var(--gold); text-shadow: 0 1px 0 rgba(255,255,255,0.2); }
+        .btn-primary:hover { background: linear-gradient(180deg, #e4c76b 0%, var(--gold-light) 100%); }
+        .btn-sm { padding: 10px 24px; font-size: 1em; }
+        .btn-danger { border-color: rgba(160,64,64,0.6); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; border-color: var(--danger); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Settings */
+        .settings-box {
+            background: var(--card);
+            border: 1px solid rgba(201,164,76,0.25);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px auto;
+            max-width: 560px;
+            text-align: left;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .settings-box.open { display: block; }
+        .settings-box label { display: block; color: var(--text-dim); font-size: 1em; margin-bottom: 6px; margin-top: 14px; }
+        .settings-box label:first-child { margin-top: 0; }
+        .settings-box input, .settings-box select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1.1em;
+            border-radius: 8px;
+        }
+        .settings-box input:focus, .settings-box select:focus { outline: none; border-color: var(--gold); }
+        .settings-row { display: flex; gap: 12px; align-items: end; }
+
+        /* Group Setup */
+        .setup-box {
+            text-align: center;
+            padding: 48px;
+            background: var(--panel);
+            border-radius: 24px;
+            border: 1px solid rgba(201,164,76,0.2);
+            font-size: 1.3em;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        }
+        .counter-row { display: flex; align-items: center; justify-content: center; gap: 28px; margin: 28px 0; }
+        .counter-row .count { font-size: 5em; color: var(--gold); font-weight: bold; min-width: 80px; }
+        .counter-row button {
+            width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--gold);
+            background: transparent; color: var(--gold); font-size: 2em; cursor: pointer; transition: all 0.2s;
+        }
+        .counter-row button:hover { background: var(--gold); color: var(--bg); }
+
+        .naming-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin: 24px 0; }
+        .naming-grid input {
+            width: 100%; padding: 14px 18px; background: var(--bg); border: 1px solid var(--border);
+            color: var(--text); font-family: inherit; font-size: 1.2em; border-radius: 10px;
+        }
+        .naming-grid input:focus { outline: none; border-color: var(--gold); }
+
+        /* Group Tabs */
+        .group-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+        .group-tab {
+            padding: 12px 24px; border-radius: 12px 12px 0 0; cursor: pointer;
+            background: var(--card); color: var(--text-dim); border: 1px solid var(--border);
+            font-family: inherit; font-size: 1.1em; transition: all 0.2s;
+        }
+        .group-tab.active { background: var(--panel); color: var(--gold); border-bottom-color: var(--panel); font-weight: bold; border-top: 2px solid var(--gold); }
+        .group-tab.done::after { content: ' ✓'; color: #6aac46; }
+
+        /* Game Panel */
+        .game-panel {
+            background: var(--panel); border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,164,76,0.06);
+            overflow: hidden;
+            position: relative;
+        }
+        .game-panel::before {
+            content: ''; display: block; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            opacity: 0.5;
+        }
+        .game-header {
+            padding: 28px 36px 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(201,164,76,0.04) 0%, transparent 100%);
+        }
+        .game-header .level-badge {
+            display: inline-block; padding: 6px 18px; border-radius: 20px;
+            background: rgba(201,164,76,0.12); border: 1px solid rgba(201,164,76,0.4); color: var(--gold-light);
+            font-size: 0.95em; margin-bottom: 14px; letter-spacing: 0.04em;
+        }
+        .game-header .scene-title { color: var(--gold-light); font-size: 3em; margin-bottom: 6px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .game-header .scene-time { color: var(--text-dim); font-size: 1.3em; margin-bottom: 18px; }
+        .game-header .scene-desc {
+            color: var(--text); font-size: 1.65em; line-height: 2.1;
+            padding: 24px 28px;
+            background: linear-gradient(135deg, rgba(201,164,76,0.04) 0%, transparent 100%);
+            border-radius: 12px;
+            border-left: 5px solid var(--gold);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.15);
+        }
+
+        /* Choices */
+        .choices-area { padding: 28px 36px; }
+        .choice-card {
+            display: flex; align-items: center; gap: 18px;
+            width: 100%; text-align: left;
+            padding: 24px 28px; margin-bottom: 14px;
+            background: linear-gradient(135deg, var(--card) 0%, rgba(37,42,30,0.6) 100%);
+            border: 2px solid var(--border); border-radius: 16px;
+            cursor: pointer; transition: all 0.3s;
+            color: var(--text); font-family: inherit; font-size: 1.5em;
+            position: relative; overflow: hidden;
+        }
+        .choice-card::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 0% 50%, rgba(201,164,76,0.06) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .choice-card:hover { border-color: var(--gold); transform: translateX(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .choice-card:hover::after { opacity: 1; }
+        .choice-card.selected { border-color: var(--gold); background: rgba(201,164,76,0.1); box-shadow: 0 0 24px rgba(201,164,76,0.08); }
+        .choice-badge {
+            flex-shrink: 0; width: 44px; height: 44px;
+            border-radius: 50%; border: 2px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold); font-weight: bold; font-size: 1.1em;
+            background: rgba(201,164,76,0.1);
+        }
+        .choice-card.locked { pointer-events: none; }
+        .choice-card.locked .choice-badge { opacity: 0.4; }
+        .choice-card.locked:not(.selected) { opacity: 0.45; }
+        .choice-card.selected .choice-badge { background: rgba(201,164,76,0.25); border-color: var(--gold-light); box-shadow: 0 0 10px rgba(201,164,76,0.3); }
+
+        /* Analysis Box */
+        .analysis-box {
+            margin: 0 36px 24px; padding: 20px 28px;
+            background: linear-gradient(135deg, rgba(201,164,76,0.08) 0%, var(--card) 100%);
+            border-radius: 12px; border: 1px solid rgba(201,164,76,0.35);
+            display: none; position: relative;
+        }
+        .analysis-box::before {
+            content: '📜'; position: absolute; top: -14px; left: 24px;
+            font-size: 1.2em; background: var(--panel); padding: 0 6px;
+        }
+        .analysis-box.visible { display: block; animation: fadeIn 0.5s; }
+        .analysis-box h4 { color: var(--gold); font-size: 1.15em; margin-bottom: 8px; }
+        .analysis-box .analysis-text { color: var(--cream); font-size: 1.2em; line-height: 1.85; }
+        .analysis-box .bookmark { display: inline-block; padding: 3px 12px; border-radius: 10px; background: rgba(201,164,76,0.12); color: var(--gold-light); font-size: 0.85em; margin-top: 10px; }
+
+        /* Score Display */
+        .score-bar-area { padding: 16px 36px 24px; display: none; }
+        .score-bar-area.visible { display: block; }
+        .score-row { display: flex; align-items: center; margin-bottom: 14px; gap: 14px; }
+        .score-row .score-label { min-width: 130px; font-size: 1.1em; color: var(--text-dim); text-align: right; }
+        .score-row .score-track { flex: 1; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .score-row .score-fill { height: 100%; border-radius: 7px; transition: width 0.8s ease-out; position: relative; }
+        .score-row .score-fill::after { content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.25); }
+        .score-fill.independence { background: linear-gradient(90deg, #3a6c36, #5ac44a); box-shadow: 0 0 10px rgba(74,124,70,0.3); }
+        .score-fill.cost { background: linear-gradient(90deg, #c9a44c, #c0392b); box-shadow: 0 0 10px rgba(192,57,43,0.3); }
+        .score-fill.trust { background: linear-gradient(90deg, #4a6a8a, #bc002d); box-shadow: 0 0 10px rgba(188,0,45,0.3); }
+        .score-row .score-val { font-size: 1.1em; color: var(--text); min-width: 44px; font-weight: bold; }
+
+        /* Level Navigation */
+        .level-nav { padding: 0 36px 28px; display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+        .level-dots { display: flex; gap: 12px; align-items: center; }
+        .level-dot {
+            width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(201,164,76,0.3);
+            background: transparent; transition: all 0.4s;
+        }
+        .level-dot.done { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(201,164,76,0.3); }
+        .level-dot.current { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,164,76,0.5); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 8px rgba(201,164,76,0.3); } 50% { box-shadow: 0 0 18px rgba(201,164,76,0.6); } }
+
+        /* Ending Screen */
+        .ending-screen {
+            text-align: center; padding: 48px 36px; background: var(--panel);
+            border-radius: 24px; border: 1px solid rgba(201,164,76,0.4);
+            box-shadow: 0 12px 60px rgba(0,0,0,0.4); position: relative; overflow: hidden;
+        }
+        .ending-screen::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        .ending-screen .ending-icon { font-size: 5em; margin-bottom: 16px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+        .ending-screen h2 { color: var(--gold-light); font-size: 2.8em; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .ending-screen .ending-type { font-size: 1.6em; color: var(--cream); margin-bottom: 20px; }
+        .ending-screen .ending-desc {
+            max-width: 750px; margin: 0 auto 28px; line-height: 2.1;
+            padding: 28px; background: linear-gradient(135deg, rgba(201,164,76,0.06) 0%, var(--card) 100%);
+            border-radius: 14px; font-size: 1.4em; border: 1px solid rgba(201,164,76,0.2);
+        }
+
+        /* Review Cards */
+        .review-section { margin: 28px auto; max-width: 750px; text-align: left; }
+        .review-section h3 { color: var(--gold); text-align: center; margin-bottom: 22px; font-size: 1.9em; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        .review-card {
+            padding: 18px 24px; margin-bottom: 14px;
+            background: linear-gradient(135deg, rgba(201,164,76,0.04) 0%, var(--card) 100%);
+            border-radius: 10px; border-left: 4px solid var(--gold);
+            font-size: 1.35em; line-height: 1.7;
+            transition: transform 0.2s;
+        }
+        .review-card:hover { transform: translateX(4px); }
+        .review-card .rc-point { color: var(--gold-light); font-weight: bold; }
+        .review-card .rc-detail { color: var(--text-dim); margin-top: 8px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            z-index: 100; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-content {
+            background: linear-gradient(180deg, var(--panel) 0%, rgba(26,26,15,0.98) 100%);
+            border: 1px solid rgba(201,164,76,0.4); border-radius: 20px;
+            padding: 36px; max-width: 700px; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .modal-content h3 { color: var(--gold); font-size: 1.4em; margin-bottom: 16px; }
+        .modal-content p, .modal-content li { color: var(--text); font-size: 1.1em; margin-bottom: 10px; }
+        .modal-content hr { border-color: rgba(201,164,76,0.2); margin: 20px 0; }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--gold); color: var(--bg); padding: 14px 32px;
+            border-radius: 30px; font-weight: bold; z-index: 200; font-size: 1.1em;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #toast.show { opacity: 1; }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border);
+            border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite;
+            vertical-align: middle; margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Audio controls */
+        .audio-ctrl {
+            position: fixed; top: 16px; right: 20px; display: flex; gap: 12px; z-index: 50;
+            font-size: 0.9em; color: var(--text-dim);
+        }
+        .audio-ctrl input[type=range] { width: 70px; accent-color: var(--gold); }
+
+        /* Footer */
+        .footer {
+            text-align: center; padding: 28px; color: rgba(138,128,96,0.6);
+            font-size: 1em; letter-spacing: 0.08em; margin-top: auto;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            #app { max-width: 100%; padding: 12px; }
+            .header h1 { font-size: 2em; }
+            .header .subtitle { font-size: 1em; }
+            .start-screen { padding: 28px 16px; }
+            .start-screen .icon-main { font-size: 3.5em; }
+            .start-screen h2 { font-size: 1.8em; }
+            .start-screen .tagline { font-size: 1.1em; }
+            .game-header { padding: 20px; }
+            .game-header .scene-title { font-size: 1.8em; }
+            .game-header .scene-desc { font-size: 1.25em; }
+            .choices-area { padding: 16px 20px; }
+            .choice-card { padding: 18px 20px; font-size: 1.2em; }
+            .analysis-box { margin: 0 20px 20px; padding: 18px 20px; }
+            .analysis-box .analysis-text { font-size: 1.1em; }
+            .score-bar-area { padding: 12px 20px 20px; }
+            .level-nav { padding: 0 20px 20px; }
+            .naming-grid { grid-template-columns: 1fr; }
+            .btn { padding: 14px 28px; font-size: 1.1em; }
+            .btn-primary { font-size: 1.2em; }
+            .ending-screen h2 { font-size: 2em; }
+            .ending-screen .ending-desc { font-size: 1.15em; }
+            .review-card { font-size: 1.1em; }
+            .review-section h3 { font-size: 1.4em; }
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+
+<!-- Audio controls -->
+<div class="audio-ctrl" id="audio-ctrl" style="display:none;">
+    <span>📣 <input type="range" id="vol-speech" min="0" max="1" step="0.1" value="0.8"></span>
+</div>
+
+<!-- Guide Modal -->
+<div class="modal-overlay" id="guide-modal">
+    <div class="modal-content">
+        <button class="btn btn-sm" onclick="toggleModal(false)" style="float:right;">✖ 关闭</button>
+        <h3>📜 游戏指南 & 历史背景</h3>
+        <p><b>开发初衷：</b>本作专为<b>马来西亚华文独中高三历史</b>课程设计，课文内容为「日本侵略马来半岛」。</p>
+        <p><b>制作者：</b>华联中学 · 朱彦翰 (Hua Lian High School · CHEW YEN HAN)</p>
+        <hr>
+        <p><b>🎮 游戏流程：</b></p>
+        <ol>
+            <li>选择分组数量（支持1-6组课堂竞赛）</li>
+            <li>每组依次完成 <b>5个历史关卡</b>，每关面临3个抉择</li>
+            <li>每次选择后，AI将生成 <b>「统考视角」历史纵深剖析</b></li>
+            <li>三项评分（独立契机/民族代价/占领者信任）累计至终局</li>
+            <li>根据最终评分判定 <b>4种历史结局</b> 之一</li>
+        </ol>
+        <p><b>⏱️ 预计时长：</b>~15分钟（课堂适用）</p>
+        <hr>
+        <p><b>📚 课文考点涵盖：</b></p>
+        <ul>
+            <li>太平洋战争原因：资源控制 & 大东亚共荣圈</li>
+            <li>登陆地点：哥打峇鲁、宋卡、北大年</li>
+            <li>关键事件：威尔斯太子号 & 击退号被击沉</li>
+            <li>沦陷原因(一)：英军准备不足 & 排斥本地人</li>
+            <li>沦陷原因(二)：利用民族矛盾 & "解放者"旗号</li>
+            <li>沦陷原因(三)：日军丛林训练 & 中国战场经验</li>
+        </ul>
+        <p style="text-align:center;color:var(--gold);font-style:italic;">"历史的十字路口，你的每一个抉择都将被统考铭记。"</p>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// 马来亚1941：抉择的十字路口 — 课堂版
+// ============================================================
+
+// --- 课文原文（用于 AI Prompt 参考） ---
+const TEXTBOOK = `
+马来西亚史 日本侵略马来半岛
+
+日本发动太平洋战争的原因：
+I. 掌控资源：日本是资源短缺、粮食不足的国家。自发动对中国的侵略后，资源的耗损更加迅速，加上欧战爆发，原料进口受限制。发动太平洋战争是要控制东南亚地区的资源，以强化其战争机器，完成独霸亚洲的美梦，建立"自给自足"的经济体制——"大东亚共荣圈"。
+II. 实现"大东亚共荣圈"：日本企图摧毁英、美、荷在西南太平洋的基地，占领东南亚的战略地点，将西方列强赶出东南亚。与德国在中东会师，并南下进攻澳洲和纽西兰。
+
+日本占领马来亚、北婆及砂拉越：
+·1941年12月8日凌晨，日军分别在泰国南部的宋卡、北大年和马来亚吉兰丹的哥打峇鲁登陆。
+·日军飞机在关丹海面击沉威尔斯太子号和击退号，并对马来半岛北部主要机场轰炸，完全掌握制海权和制空权，1942年1月31日占领马来半岛。
+·在北婆，日军先占领纳闽，并在1942年攻下亚庇和山打根。
+·砂拉越方面，日军在1941年12月登陆美里，并在短期间占领古晋和诗巫。
+
+东南亚快速沦陷的原因：
+(一)英、美、荷各国不认为日本将发动战争，在防务上缺乏认真的准备。殖民体制长期排斥本地人民，战时不敢动员他们参与防务，导致应对被动。
+(二)日本利用西方殖民国家与东南亚各地人民之间的民族矛盾，打着"反对白人殖民主义"的旗号，以"解放者"的姿态入侵东南亚，获得部分上层人士和民族主义者的支持和协助。
+(三)在军事上，英、美、荷在东南亚的兵力虽不亚于日军，但部署分散，缺乏统一的指挥。对于日军同时从各方向大举进攻突袭，估计不足。日军在侵略东南亚之前，参战部队已经进行热带丛林和夜间作战的训练。一些部队也曾在中国参战，经验丰富。通过周密的计划与详细的情报准备，日本得以采取先发制人，实施偷袭和扬长避短的战略，迅速取得海空的控制权，夺取了军事主动权。`;
+
+// --- 5关定义 ---
+const LEVELS = [
+    {
+        id: 0,
+        title: '第一关：山雨欲来',
+        subtitle: '⏳ 1941年12月8日凌晨',
+        scene: '哥打峇鲁的炮声惊醒了丛林。一个日本少佐带着《大东亚共荣宣言》和满满一箱经费找到你——一位在当地有影响力的年轻民族主义领袖（KMM成员）。他请你号召人民"欢迎亚洲的解放者"。\n\n几乎同时，英国殖民官员也派人来见你，要求你组织青年协助盟军抵御入侵。',
+        textbookTag: '沦陷原因(二) — 民族矛盾 & "解放者"旗号',
+        choices: [
+            {
+                label: 'A', text: '接受日军援助，号召人民"迎接亚洲解放"',
+                scores: { independence: 2, cost: 1, trust: 2 },
+                analysis: '日本以"亚洲是亚洲人的亚洲"为旗号，利用反殖民情绪获取支持。但课文指出：这不过是实现"大东亚共荣圈"、控制东南亚资源的手段。"解放"实为新侵略的伪装。'
+            },
+            {
+                label: 'B', text: '表面中立，私下同时接触双方，观望局势',
+                scores: { independence: 1, cost: 0, trust: 1 },
+                analysis: '殖民体制长期排斥本地人参与防务，导致他们既不愿为殖民者卖命，也不敢轻信侵略者。夹在旧殖民者与新侵略者之间——这正是马来亚快速沦陷的深层社会原因。'
+            },
+            {
+                label: 'C', text: '协助英军，相信战后英国会给予马来亚自治',
+                scores: { independence: 0, cost: 1, trust: -1 },
+                analysis: '课文指出英、美、荷"不认为日本将发动战争，在防务上缺乏认真的准备"。殖民政府战前排斥本地人，战时才来求助——将独立希望寄托于殖民者，终将被历史证明是虚幻。'
+            }
+        ]
+    },
+    {
+        id: 1,
+        title: '第二关：白人的溃败',
+        subtitle: '🚢 1941年12月10日',
+        scene: '噩耗传来：英国皇家海军远东舰队的骄傲——"威尔斯太子号"和"击退号"在关丹海域被日军飞机击沉！两千余名官兵葬身大海。\n\n与此同时，日军轰炸了马来半岛北部所有主要机场，英国皇家空军几乎被全歼。制海权和制空权彻底落入日军之手。英军联络人惊慌失措，请求你协助疏散——但他连一张准确的地图都拿不出来。',
+        textbookTag: '沦陷原因(一) — 英军准备不足 & 排斥本地人',
+        choices: [
+            {
+                label: 'A', text: '帮助英军撤退——毕竟他们还是"合法政府"',
+                scores: { independence: 1, cost: 0, trust: -2 },
+                analysis: '威尔士太子号和击退号被击沉，标志英国远东海上霸权瓦解——课文将此列为日本"完全掌握制海权和制空权"的关键转折。殖民者从未真心为马来亚独立着想，帮助撤退改变不了这一事实。'
+            },
+            {
+                label: 'B', text: '拒绝英军——殖民者种下的苦果，让他们自己尝',
+                scores: { independence: 2, cost: 0, trust: 1 },
+                analysis: '课文将殖民政府排斥本地人列为沦陷的第一个原因。当殖民者溃败时，曾被排斥的人民冷眼旁观——这是殖民体制自己种下的苦果。信任一旦失去，临危再求已来不及。'
+            },
+            {
+                label: 'C', text: '趁机组织本地自卫队——不靠英国，也不靠日本',
+                scores: { independence: 3, cost: 2, trust: -1 },
+                analysis: '课文指出盟军兵力"部署分散，缺乏统一的指挥"。自卫是民族觉醒的表现，但没有外援和统一指挥，零散武装难以抵挡日军周密计划的闪电攻势。独立之路，道阻且长。'
+            }
+        ]
+    },
+    {
+        id: 2,
+        title: '第三关：丛林闪电战',
+        subtitle: '🌴 1941年12月下旬',
+        scene: '日军以惊人的速度穿越丛林向南推进。你亲眼看到：日军士兵在夜间行军如履平地，利用自行车在橡胶林间的狭窄小径上快速机动——英军的汽车在丛林里反而成了累赘。\n\n一名日军上尉得意地告诉你，他的联队曾在中国华北和华南作战多年，"这种丛林？比起中国的游击区，简直是散步。"',
+        textbookTag: '沦陷原因(三) — 日军丛林训练 & 中国战场经验',
+        choices: [
+            {
+                label: 'A', text: '钦佩日军的军事效率，决定全力配合新秩序',
+                scores: { independence: 0, cost: 2, trust: 3 },
+                analysis: '课文指出日军"进行了热带丛林和夜间作战训练"，且"在中国参战，经验丰富"。日军以周密计划实现先发制人。但军事效率≠道义正确——强大的军队同样可以是侵略者。'
+            },
+            {
+                label: 'B', text: '警惕——如此高效善战的军队，战后绝不会轻易离开',
+                scores: { independence: 2, cost: 0, trust: 0 },
+                analysis: '课文指出日军"采取先发制人、扬长避短的战略，迅速取得海空控制权"。如此精心策划的军事行动绝非临时起意，而是长期准备的系统性侵略。天真的期待将付出沉重代价。'
+            },
+            {
+                label: 'C', text: '暗中观察学习日军战术和编制，为将来做准备',
+                scores: { independence: 3, cost: 1, trust: -1 },
+                analysis: '课文详述了日军的军事优势：丛林训练、夜间作战、中国实战经验、周密情报——这些正是英军所缺。从侵略者身上学军事技术，同时保持政治清醒，是在夹缝中积累力量的务实之道。'
+            }
+        ]
+    },
+    {
+        id: 3,
+        title: '第四关：共荣的真相',
+        subtitle: '🏭 1942年1月，马来半岛即将全面沦陷',
+        scene: '日军已控制大部分城镇。但你注意到一些令人不安的变化：\n\n橡胶园和锡矿场的产品正被系统性地装箱运往日本；本地米粮被以"军需"名义无偿征用，米价飞涨、民众挨饿；日本人说的"共荣"似乎只有"共"走了资源，"荣"了他们自己。\n\n当初那些激动人心的"亚洲解放"口号，现在看来更像是精心设计的宣传。',
+        textbookTag: '太平洋战争原因(I) — 资源控制 & 大东亚共荣圈',
+        choices: [
+            {
+                label: 'A', text: '继续配合——现实政治，生存优先',
+                scores: { independence: 0, cost: 3, trust: 3 },
+                analysis: '课文指出日本"资源短缺、粮食不足"，发动战争的根本目的就是"控制东南亚资源，强化战争机器"。"大东亚共荣圈"实质是日本殖民地体系。配合保一时平安，但民族的资源正被系统性掠夺。'
+            },
+            {
+                label: 'B', text: '暗中记录日军的掠夺行径，保存历史证据',
+                scores: { independence: 2, cost: 1, trust: 0 },
+                analysis: '日本因"资源短缺"、侵华消耗、"欧战限制进口"，发动太平洋战争的核心动机就是控制东南亚的橡胶、锡矿、石油。真实记录掠夺，是为后世留下不可篡改的铁证。'
+            },
+            {
+                label: 'C', text: '公开质疑日军——"说好的共荣呢？"',
+                scores: { independence: 1, cost: 3, trust: -3 },
+                analysis: '课文揭示日本企图"摧毁英美荷基地，占领战略地点，将西方列强赶出东南亚"——但这并非为了亚洲独立，而是为了实现日本独霸亚洲。公开质疑需要勇气，代价极其惨重。'
+            }
+        ]
+    }
+];
+
+// --- 结局判定 ---
+function getEnding(scores) {
+    const { independence, cost, trust } = scores;
+    // Note: after 4 levels, scores range roughly ind:1-10, cost:2-8, trust:-7-9
+    // Thresholds set at ~70% of max to give each ending a fair share of paths
+    if (trust >= 6 && independence <= 4) return 'puppet';      // ~15% of paths: sold out to Japan
+    if (independence >= 7 && trust <= 3) return 'awakener';    // ~25% of paths: held to independence
+    if (cost >= 7) return 'martyr';                             // ~15% of paths: paid heavy price
+    return 'survivor';                                          // ~45% of paths: balanced middle way
+}
+
+const ENDINGS = {
+    awakener: {
+        icon: '🏆', type: '民族觉醒者',
+        desc: '你在惊涛骇浪中保持了清醒的头脑。你没有沦为任何一方的工具——既不盲从日本的"解放"谎言，也不轻信英国的殖民承诺。战后，你成为马来亚独立运动的中坚力量。你用自己的亲身经历向世界证明：殖民统治与军国侵略，都是亚洲人民必须摆脱的枷锁。',
+        grade: '优秀'
+    },
+    survivor: {
+        icon: '🎭', type: '两难幸存者',
+        desc: '你在殖民者与侵略者的夹缝中艰难求存。你的组织得以保全，民众避免了最坏的命运。但历史告诉我们：在没有真正独立之前，所有的"生存策略"都不过是在延长被他人支配的时间。真正的出路，从来只有一条——独立自主。',
+        grade: '良好'
+    },
+    puppet: {
+        icon: '⛓️', type: '傀儡统治者',
+        desc: '你选择了与日本军政府全面合作。在"共荣圈"的幻象中，你获得了暂时的权力和地位。但历史是无情的——1945年日本战败后，英国殖民者重返马来亚，你被以"通敌罪"审判。课文告诉我们：日本从未真心帮助亚洲独立，它不过是在建立自己的帝国。',
+        grade: '反思'
+    },
+    martyr: {
+        icon: '💀', type: '理想的殉道者',
+        desc: '你的理想主义让你过早地暴露在两大帝国的炮火之下。你的勇气令人敬佩，但你的组织被摧毁，民众付出了惨重的代价。历史证明：在殖民主义与军国主义两大机器之间，没有策略的勇气如同飞蛾扑火。保存实力、等待时机，有时比慷慨赴死更需要智慧。',
+        grade: '勇气可嘉'
+    }
+};
+
+// --- 统考复习卡考点 ---
+const REVIEW_POINTS = [
+    { point: '日本发动太平洋战争原因(I)', detail: '日本资源短缺、粮食不足，侵华战争加剧资源耗损，欧战限制原料进口。发动太平洋战争以控制东南亚资源，建立"自给自足"的大东亚共荣圈。' },
+    { point: '日本发动太平洋战争原因(II)', detail: '摧毁英美荷在西南太平洋的基地，占领战略地点，将西方列强赶出东南亚，实现独霸亚洲的目标。' },
+    { point: '日军登陆时间与地点', detail: '1941年12月8日凌晨，日军在泰国宋卡、北大年和马来亚吉兰丹哥打峇鲁登陆。北婆方面占领纳闽→亚庇→山打根；砂拉越登陆美里→占领古晋和诗巫。' },
+    { point: '关键事件：击沉威尔斯太子号', detail: '日军飞机在关丹海面击沉英国威尔斯太子号和击退号，轰炸马来半岛北部机场，完全掌握制海权和制空权。1942年1月31日占领马来半岛。' },
+    { point: '沦陷原因(一)', detail: '英美荷不认为日本会发动战争，防务缺乏认真准备。殖民体制长期排斥本地人民，战时不敢动员他们参与防务，应对被动。' },
+    { point: '沦陷原因(二)', detail: '日本利用西方殖民与东南亚人民的民族矛盾，打着"反对白人殖民主义"旗号，以"解放者"姿态入侵，获得部分民族主义者支持。' },
+    { point: '沦陷原因(三)', detail: '盟军兵力部署分散、缺乏统一指挥。日军进行过热带丛林和夜间作战训练，拥有中国战场实战经验，通过周密计划和情报准备，先发制人取得制海空权。' },
+];
+
+// ============================================================
+// 游戏状态
+// ============================================================
+const STORAGE_KEY = 'malaya1941_save';
+const WORKER_URL = 'https://malaya1941-ai.chewyenhan.workers.dev';
+
+let state = {
+    apiKey: localStorage.getItem('malaya_api_key') || '',
+    selectedModel: localStorage.getItem('malaya_model') || 'gemini-2.5-flash',
+    availableModels: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+    modelChecked: false,
+    useWorker: true,  // 优先使用 Worker 代理（无需学生输入 Key）
+    groupCount: 1,
+    groups: [],
+    activeGroup: 0,
+    screen: 'start',
+    settingsOpen: false,
+    loading: false,
+    ttsEnabled: true,
+};
+
+// ============================================================
+// 渲染函数
+// ============================================================
+const app = document.getElementById('app');
+const toast = document.getElementById('toast');
+
+function showToast(msg) {
+    toast.textContent = msg; toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function saveState() {
+    try {
+        const toSave = { groups: state.groups, activeGroup: state.activeGroup, screen: state.screen };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch(e) {}
+}
+
+function render() {
+    const g = state.groups[state.activeGroup];
+    const isMulti = state.groups.length > 1;
+    const showTabs = isMulti && (state.screen === 'game' || state.screen === 'ending');
+
+    let html = '';
+
+    // Header
+    html += `<div class="header"><h1>⚔️ 马来亚1941：抉择的十字路口</h1>`;
+    html += `<div class="subtitle">— 高三历史 · 日本侵略马来半岛 · 课堂交互游戏 —</div></div>`;
+
+    // Audio controls
+    html += `<div class="audio-ctrl" style="position:static;display:flex;justify-content:flex-end;margin-bottom:8px;gap:12px;">`;
+    html += `<button class="btn btn-sm" onclick="toggleModal(true)">📜 指南</button>`;
+    html += `<button class="btn btn-sm" onclick="toggleSettings()">⚙️ 设置</button>`;
+    if (state.screen !== 'start' && state.screen !== 'setup' && state.screen !== 'naming') {
+        html += `<button class="btn btn-sm btn-danger" onclick="resetGame()">🔄 重新开始</button>`;
+    }
+    html += `</div>`;
+
+    // Settings
+    html += `<div class="settings-box${state.settingsOpen ? ' open' : ''}" id="settings-box">`;
+    html += `<div style="background:rgba(74,124,70,0.15);border:1px solid rgba(74,124,70,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.95em;color:#6aac46;">`;
+    html += `✅ <b>Worker 代理模式</b> — AI 分析已内置，无需输入 API Key 即可使用</div>`;
+    html += `<label>🔑 自定义 API Key（可选，留空则使用内置代理）</label>`;
+    html += `<div class="settings-row"><input type="password" id="api-key-input" value="${escHtml(state.apiKey)}" placeholder="输入你自己的 Gemini API Key（可选）...">`;
+    html += `<button class="btn btn-sm" onclick="saveApiKey()">保存</button></div>`;
+    html += `<div style="font-size:0.8em;color:var(--text-dim);margin-top:4px;">留空 = 使用内置 Cloudflare Worker 代理（推荐）| 填写 = 使用你自己的 Key</div>`;
+    html += `<label>🤖 AI 模型</label>`;
+    html += `<div class="settings-row"><select id="model-select">`;
+    state.availableModels.forEach(m => {
+        html += `<option value="${m}"${m === state.selectedModel ? ' selected' : ''}>${m}</option>`;
+    });
+    html += `</select><button class="btn btn-sm" onclick="detectModels()">检测模型</button></div>`;
+    html += `<div id="model-status" style="font-size:0.85em;color:var(--text-dim);margin-top:4px;"></div>`;
+    html += `<label style="margin-top:12px;">📣 语音朗读 <input type="checkbox" id="tts-toggle"${state.ttsEnabled ? ' checked' : ''} onchange="toggleTTS()"></label>`;
+    html += `</div>`;
+
+    // Group tabs
+    if (showTabs) {
+        html += `<div class="group-tabs">`;
+        state.groups.forEach((grp, i) => {
+            const doneAll = grp.currentLevel >= LEVELS.length;
+            html += `<button class="group-tab${i === state.activeGroup ? ' active' : ''}${doneAll ? ' done' : ''}" onclick="switchGroup(${i})">${escHtml(grp.name)}${grp.currentLevel > 0 ? ` (${grp.currentLevel}/${LEVELS.length})` : ''}</button>`;
+        });
+        html += `</div>`;
+    }
+
+    // Screen content
+    switch (state.screen) {
+        case 'start': html += renderStart(); break;
+        case 'setup': html += renderSetup(); break;
+        case 'naming': html += renderNaming(); break;
+        case 'game': html += renderGame(g); break;
+        case 'ending': html += renderEnding(g); break;
+    }
+
+    // Footer
+    html += `<div class="footer">© 2026 华联中学 · Hua Lian High School · CHEW YEN HAN 制作</div>`;
+
+    app.innerHTML = html;
+
+    // Post-render hooks
+    if (state.screen === 'game' && g && g.currentLevel < LEVELS.length && g.choiceMade === undefined) {
+        // Bind choice card click handlers
+        document.querySelectorAll('.choice-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.choiceIdx);
+                makeChoice(idx);
+            });
+        });
+        // Auto-speak scene text when entering a new level (only once)
+        if (state.ttsEnabled && g.lastSpokenLevel !== g.currentLevel) {
+            g.lastSpokenLevel = g.currentLevel;
+            const lvl = LEVELS[g.currentLevel];
+            if (lvl) {
+                const sceneText = lvl.scene.replace(/\n/g, ' ');
+                speakText(lvl.title + '。' + sceneText);
+            }
+        }
+    }
+    if (state.screen === 'game' && g && g.choiceMade !== undefined && !g.aiAnalysis && !state.loading) {
+        // Auto-trigger AI analysis after choice (guard with loading to prevent double-trigger)
+        state.loading = true;
+        triggerAIAnalysis(g);
+    }
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// Start Screen
+// ============================================================
+function renderStart() {
+    let h = `<div class="start-screen">`;
+    h += `<div class="icon-main">🌏</div>`;
+    h += `<h2>马来亚1941：抉择的十字路口</h2>`;
+    h += `<div class="tagline">1941年12月8日 · 哥打峇鲁 · 民族存亡的关头</div>`;
+    h += `<p style="max-width:500px;margin:0 auto 20px;color:var(--text-dim);font-size:0.95em;">`;
+    h += `你是1941年马来半岛一位年轻的民族主义领袖。日军的炮火已经点燃了海岸线，英帝国的太阳正在坠落。`;
+    h += `在殖民者与侵略者之间，你的每一个选择都将影响民族的命运——也将成为统考考卷上你必须理解的历史逻辑。</p>`;
+    h += `<button class="btn btn-primary" onclick="startSetup()" style="font-size:1.3em;padding:16px 48px;">⚔️ 进入历史抉择</button>`;
+    h += `<div style="margin-top:24px;">`;
+    h += `<button class="btn btn-sm" onclick="toggleModal(true)" style="margin-right:8px;">📜 游戏指南</button>`;
+    h += `<button class="btn btn-sm" onclick="toggleSettings()">⚙️ API 设置</button>`;
+    h += `</div>`;
+
+    // Quick load
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            if (data.groups && data.groups.length > 0 && data.screen !== 'start') {
+                h += `<div style="margin-top:16px;font-size:0.85em;color:var(--text-dim);">`;
+                h += `📂 检测到未完成的游戏进度 `;
+                h += `<a href="javascript:void(0)" onclick="loadGame()" style="color:var(--gold);">点击继续</a>`;
+                h += `</div>`;
+            }
+        } catch(e) {}
+    }
+
+    h += `</div>`;
+    return h;
+}
+
+// ============================================================
+// Setup Screen
+// ============================================================
+function renderSetup() {
+    let h = `<div class="setup-box">`;
+    h += `<h2 style="color:var(--gold);margin-bottom:8px;">🏫 课堂竞赛配置</h2>`;
+    h += `<p style="color:var(--text-dim);">选择参与游戏的小组数量（支持1-6组）</p>`;
+    h += `<div class="counter-row">`;
+    h += `<button onclick="adjustGroups(-1)">－</button>`;
+    h += `<span class="count">${state.groupCount}</span>`;
+    h += `<button onclick="adjustGroups(1)">＋</button>`;
+    h += `</div>`;
+    h += `<button class="btn btn-primary" onclick="startNaming()">下一步：输入组名</button>`;
+    h += `<div style="margin-top:16px;"><button class="btn btn-sm" onclick="state.screen='start';render();">返回首页</button></div>`;
+    h += `</div>`;
+    return h;
+}
+
+// ============================================================
+// Naming Screen
+// ============================================================
+function renderNaming() {
+    let h = `<div class="setup-box">`;
+    h += `<h2 style="color:var(--gold);margin-bottom:4px;">📝 战队命名</h2>`;
+    h += `<p style="color:var(--text-dim);margin-bottom:20px;">为每组取一个彰显风格的名字</p>`;
+    h += `<div class="naming-grid">`;
+    state.groups.forEach((g, i) => {
+        h += `<div><label style="display:block;color:var(--text-dim);font-size:0.85em;margin-bottom:4px;">第${i+1}组</label>`;
+        h += `<input type="text" id="name-input-${i}" value="${escHtml(g.name)}" placeholder="输入组名...">`;
+        h += `</div>`;
+    });
+    h += `</div>`;
+    h += `<button class="btn btn-primary" onclick="finishNaming()">开始游戏</button>`;
+    h += `<div style="margin-top:16px;"><button class="btn btn-sm" onclick="state.screen='setup';render();">返回上一步</button></div>`;
+    h += `</div>`;
+    return h;
+}
+
+// ============================================================
+// Game Screen
+// ============================================================
+function renderGame(g) {
+    if (!g) return '<div class="setup-box"><p>未找到游戏数据</p></div>';
+
+    const lvl = LEVELS[g.currentLevel];
+    if (!lvl) {
+        // Game finished - go to ending
+        setTimeout(() => { state.screen = 'ending'; render(); }, 100);
+        return '<div class="setup-box"><p>正在生成结局...</p></div>';
+    }
+
+    let h = `<div class="game-panel">`;
+
+    // Header
+    h += `<div class="game-header">`;
+    h += `<span class="level-badge">📚 ${lvl.textbookTag}</span>`;
+    h += `<div class="scene-title">${lvl.title}</div>`;
+    h += `<div class="scene-time">${lvl.subtitle}</div>`;
+    h += `<div class="scene-desc">${lvl.scene.replace(/\n/g, '<br>')}</div>`;
+    h += `</div>`;
+
+    // Choices
+    h += `<div class="choices-area">`;
+    const locked = g.choiceMade !== undefined;
+    lvl.choices.forEach((c, i) => {
+        let cls = 'choice-card';
+        if (locked) cls += ' locked';
+        if (locked && g.choiceMade === i) cls += ' selected';
+        h += `<button class="${cls}" data-choice-idx="${i}"${locked ? ' disabled' : ''}>`;
+        h += `<span class="choice-badge">${c.label}</span>${c.text}`;
+        h += `</button>`;
+    });
+    h += `</div>`;
+
+    // AI Analysis
+    if (g.aiAnalysis && g.choiceMade !== undefined) {
+        h += `<div class="analysis-box visible">`;
+        h += `<h4>📜 统考视角 · 历史纵深剖析</h4>`;
+        h += `<div class="analysis-text">${escHtml(g.aiAnalysis)}</div>`;
+        if (g.aiGenerated) {
+            h += `<span class="bookmark">🤖 AI 生成 · 基于课文原文</span>`;
+        } else {
+            h += `<span class="bookmark">📖 基于课文原文</span>`;
+        }
+        h += `</div>`;
+    } else if (g.choiceMade !== undefined && state.loading) {
+        h += `<div class="analysis-box visible">`;
+        h += `<h4><span class="spinner"></span> AI 正在生成统考视角分析...</h4>`;
+        h += `</div>`;
+    }
+
+    // Score bars
+    if (g.choiceMade !== undefined) {
+        h += `<div class="score-bar-area visible">`;
+        h += scoreBar('🆓 独立契机', g.scores.independence, 12, 'independence');
+        h += scoreBar('💔 民族代价', g.scores.cost, 12, 'cost');
+        h += scoreBar('🎌 占领者信任', g.scores.trust, 12, 'trust');
+        h += `</div>`;
+    }
+
+    // Navigation
+    h += `<div class="level-nav">`;
+    h += `<div class="level-dots">`;
+    LEVELS.forEach((l, i) => {
+        let cls = 'level-dot';
+        if (i < g.currentLevel) cls += ' done';
+        else if (i === g.currentLevel) cls += ' current';
+        h += `<span class="${cls}"></span>`;
+    });
+    // Plus final level dot for ending
+    h += `<span class="level-dot${g.currentLevel >= LEVELS.length ? ' done' : ''}"></span>`;
+    h += `</div>`;
+    if (g.choiceMade !== undefined && g.aiAnalysis) {
+        if (g.currentLevel < LEVELS.length - 1) {
+            h += `<button class="btn btn-primary" onclick="nextLevel()">进入下一关 →</button>`;
+        } else {
+            h += `<button class="btn btn-primary" onclick="nextLevel()">🏆 查看结局</button>`;
+        }
+    }
+    h += `</div>`;
+
+    h += `</div>`;
+    return h;
+}
+
+function scoreBar(label, val, max, cls) {
+    const pct = Math.min(100, Math.max(0, Math.round(val / max * 100)));
+    return `<div class="score-row">
+        <span class="score-label">${label}</span>
+        <span class="score-track"><span class="score-fill ${cls}" style="width:${pct}%"></span></span>
+        <span class="score-val">${val}/${max}</span>
+    </div>`;
+}
+
+// ============================================================
+// Ending Screen
+// ============================================================
+function renderEnding(g) {
+    if (!g) return '<div class="setup-box"><p>未找到游戏数据</p></div>';
+
+    const endingKey = getEnding(g.scores);
+    const ending = ENDINGS[endingKey];
+
+    let h = `<div class="ending-screen">`;
+    h += `<div class="ending-icon">${ending.icon}</div>`;
+    h += `<h2>${ending.type}</h2>`;
+    h += `<div class="ending-type">评级：${ending.grade}</div>`;
+    h += `<div class="ending-desc">${ending.desc}</div>`;
+
+    // Score summary
+    h += `<div style="max-width:400px;margin:0 auto 20px;">`;
+    h += scoreBar('🆓 独立契机', g.scores.independence, 12, 'independence');
+    h += scoreBar('💔 民族代价', g.scores.cost, 12, 'cost');
+    h += scoreBar('🎌 占领者信任', g.scores.trust, 12, 'trust');
+    h += `</div>`;
+
+    // Review cards
+    h += `<div class="review-section">`;
+    h += `<h3>📚 统考复习卡</h3>`;
+    h += `<p style="text-align:center;color:var(--text-dim);font-size:0.85em;margin-bottom:16px;">以下考点均来自你在游戏中亲身经历的历史场景</p>`;
+    REVIEW_POINTS.forEach(rp => {
+        h += `<div class="review-card"><span class="rc-point">📌 ${rp.point}</span>`;
+        h += `<div class="rc-detail">${rp.detail}</div></div>`;
+    });
+    h += `</div>`;
+
+    // Replay button
+    h += `<div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">`;
+    h += `<button class="btn btn-primary" onclick="resetGame()">🔄 重新体验</button>`;
+    if (state.groups.length > 1) {
+        const allDone = state.groups.every(grp => grp.currentLevel >= LEVELS.length);
+        if (!allDone) {
+            h += `<button class="btn" onclick="nextUndoneGroup()">跳转到未完成的小组 →</button>`;
+        }
+    }
+    h += `<button class="btn btn-sm" onclick="toggleModal(true)">📜 查看指南</button>`;
+    h += `</div>`;
+
+    // Group comparison
+    if (state.groups.length > 1) {
+        h += `<div style="margin-top:24px;max-width:500px;margin-left:auto;margin-right:auto;">`;
+        h += `<h3 style="color:var(--gold);text-align:center;margin-bottom:12px;">🏆 小组对比</h3>`;
+        const sorted = [...state.groups].sort((a,b) => {
+            const aDone = a.currentLevel >= LEVELS.length;
+            const bDone = b.currentLevel >= LEVELS.length;
+            if (aDone && !bDone) return -1;
+            if (!aDone && bDone) return 1;
+            if (!aDone && !bDone) return b.currentLevel - a.currentLevel;
+            return (b.scores.independence - b.scores.cost) - (a.scores.independence - a.scores.cost);
+        });
+        sorted.forEach((grp, i) => {
+            const e = grp.currentLevel >= LEVELS.length ? ENDINGS[getEnding(grp.scores)] : null;
+            h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:4px;background:var(--card);border-radius:8px;">`;
+            h += `<span>${i+1}. ${escHtml(grp.name)}</span>`;
+            if (e) {
+                h += `<span style="color:var(--gold);">${e.icon} ${e.type}（${e.grade}）</span>`;
+            } else {
+                h += `<span style="color:var(--text-dim);">进行中（${grp.currentLevel}/${LEVELS.length}）</span>`;
+            }
+            h += `</div>`;
+        });
+        h += `</div>`;
+    }
+
+    h += `</div>`;
+    return h;
+}
+
+// ============================================================
+// Game Actions
+// ============================================================
+function startSetup() {
+    state.screen = 'setup';
+    state.groups = [];
+    render();
+}
+
+function adjustGroups(delta) {
+    state.groupCount = Math.max(1, Math.min(6, state.groupCount + delta));
+    render();
+}
+
+function startNaming() {
+    state.groups = Array.from({ length: state.groupCount }, (_, i) => ({
+        id: i,
+        name: `第${i+1}组`,
+        currentLevel: 0,
+        lastSpokenLevel: -1,
+        scores: { independence: 0, cost: 0, trust: 0 },
+        choices: [],
+        choiceMade: undefined,
+        aiAnalysis: null,
+        aiGenerated: false,
+    }));
+    state.screen = 'naming';
+    render();
+}
+
+function finishNaming() {
+    // Read names from inputs
+    state.groups.forEach((g, i) => {
+        const input = document.getElementById(`name-input-${i}`);
+        if (input && input.value.trim()) {
+            g.name = input.value.trim();
+        }
+    });
+    state.activeGroup = 0;
+    state.screen = 'game';
+    saveState();
+    render();
+}
+
+function switchGroup(idx) {
+    state.activeGroup = idx;
+    saveState();
+    render();
+}
+
+function makeChoice(idx) {
+    const g = state.groups[state.activeGroup];
+    if (!g || g.choiceMade !== undefined) return;
+
+    const lvl = LEVELS[g.currentLevel];
+    if (!lvl) return;
+
+    const choice = lvl.choices[idx];
+    g.choiceMade = idx;
+    g.scores.independence += choice.scores.independence;
+    g.scores.cost += choice.scores.cost;
+    g.scores.trust += choice.scores.trust;
+    g.choices.push(idx);
+    g.aiAnalysis = null; // Will be filled by AI
+
+    saveState();
+    render();
+}
+
+async function triggerAIAnalysis(g) {
+    const lvl = LEVELS[g.currentLevel];
+    if (!lvl) return;
+    const choice = lvl.choices[g.choiceMade];
+
+    // Build the AI prompt
+    const userMessage = `你是马来西亚华文独中高三历史的统考辅导AI。
+
+请根据以下课文内容，为学生的历史游戏选择生成一段"统考视角·历史纵深剖析"。
+
+【课文原文（请严格基于此分析，不要编造）】
+${TEXTBOOK}
+
+【当前游戏情境】
+关卡：${lvl.title}
+时间：${lvl.subtitle}
+对应课文考点：${lvl.textbookTag}
+学生选择了：${choice.text}
+
+【输出要求】
+写一段简短分析（60-100字），必须：
+1. 严格基于课文原文，引用具体考点
+2. 关联学生选择与课文分析（如沦陷原因一/二/三）
+3. 语言精炼、一句见血，适合课堂即时点评
+4. 直接输出分析，不要标题、不要JSON、不要标记符号
+
+现在请输出分析：`;
+
+    // Try Worker proxy first (no API key needed), then direct API, then fallback
+    try {
+        let resp, data;
+
+        if (!state.apiKey && state.useWorker) {
+            // Use Cloudflare Worker proxy — no student API key required
+            resp = await fetch(`${WORKER_URL}/gemini`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: state.selectedModel,
+                    contents: [{ parts: [{ text: userMessage }] }],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
+                })
+            });
+        } else if (state.apiKey) {
+            // Use direct Gemini API (for local dev with own key)
+            resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${state.selectedModel}:generateContent?key=${state.apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userMessage }] }],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
+                })
+            });
+        } else {
+            throw new Error('No API key and worker disabled');
+        }
+
+        data = await resp.json();
+
+        if (data.candidates && data.candidates[0]) {
+            const aiText = data.candidates[0].content.parts[0].text.trim();
+            const endsProperly = /[。！？」』\.!?\n]$/.test(aiText);
+            if (!endsProperly && aiText.length < 60) {
+                console.warn('AI response appears truncated, using pre-written');
+                g.aiAnalysis = choice.analysis;
+                g.aiGenerated = false;
+            } else {
+                g.aiAnalysis = aiText;
+                g.aiGenerated = true;
+            }
+        } else {
+            console.warn('No candidates in response:', data);
+            g.aiAnalysis = choice.analysis;
+            g.aiGenerated = false;
+        }
+    } catch (e) {
+        console.warn('AI API error, using pre-written analysis:', e);
+        g.aiAnalysis = choice.analysis;
+        g.aiGenerated = false;
+    }
+
+    state.loading = false;
+    saveState();
+    render();
+
+    // TTS for analysis
+    if (state.ttsEnabled) speakText(g.aiAnalysis);
+}
+
+function nextLevel() {
+    const g = state.groups[state.activeGroup];
+    g.currentLevel++;
+    g.choiceMade = undefined;
+    g.aiAnalysis = null;
+    g.aiGenerated = false;
+
+    if (g.currentLevel >= LEVELS.length) {
+        state.screen = 'ending';
+    }
+    saveState();
+    render();
+}
+
+function nextUndoneGroup() {
+    for (let i = 0; i < state.groups.length; i++) {
+        if (state.groups[i].currentLevel < LEVELS.length) {
+            state.activeGroup = i;
+            state.screen = 'game';
+            saveState();
+            render();
+            return;
+        }
+    }
+    showToast('所有小组已完成游戏！');
+}
+
+function resetGame() {
+    if (confirm('确定要重新开始吗？所有进度将丢失。')) {
+        state.groups = [];
+        state.activeGroup = 0;
+        state.screen = 'start';
+        state.loading = false;
+        localStorage.removeItem(STORAGE_KEY);
+        render();
+    }
+}
+
+function loadGame() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const data = JSON.parse(saved);
+            state.groups = data.groups || [];
+            state.activeGroup = data.activeGroup || 0;
+            state.screen = data.screen || 'game';
+            state.loading = false;
+            // Patch: ensure lastSpokenLevel exists for older saves
+            state.groups.forEach(grp => {
+                if (grp.lastSpokenLevel === undefined) grp.lastSpokenLevel = grp.currentLevel;
+            });
+            // Reset choiceMade for current level to allow re-render
+            const g = state.groups[state.activeGroup];
+            if (g && g.aiAnalysis && g.choiceMade !== undefined) {
+                // Nothing to reset - choice is done
+            }
+            render();
+            showToast('📂 已恢复游戏进度');
+        }
+    } catch(e) {
+        showToast('恢复失败，请重新开始');
+    }
+}
+
+// ============================================================
+// Settings & API
+// ============================================================
+function toggleSettings() {
+    state.settingsOpen = !state.settingsOpen;
+    render();
+}
+
+function saveApiKey() {
+    const input = document.getElementById('api-key-input');
+    if (input) {
+        state.apiKey = input.value.trim();
+        localStorage.setItem('malaya_api_key', state.apiKey);
+        showToast(state.apiKey ? '✅ API Key 已保存' : 'API Key 已清除（将使用预写分析）');
+    }
+    const select = document.getElementById('model-select');
+    if (select) {
+        state.selectedModel = select.value;
+        localStorage.setItem('malaya_model', state.selectedModel);
+    }
+}
+
+// Update model select when changed
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'model-select') {
+        state.selectedModel = e.target.value;
+        localStorage.setItem('malaya_model', state.selectedModel);
+    }
+});
+
+async function detectModels() {
+    const status = document.getElementById('model-status');
+    if (status) status.textContent = '检测中...';
+
+    // Try Worker first, then direct API
+    const tryFetch = async (url) => {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data.models) {
+            const models = data.models
+                .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+                .map(m => m.name.replace('models/', ''));
+            if (models.length > 0) {
+                state.availableModels = models;
+                state.selectedModel = models.find(m => m.includes('flash')) || models[0];
+                if (status) status.textContent = `✅ 检测到 ${models.length} 个可用模型`;
+                showToast(`已切换至 ${state.selectedModel}`);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    try {
+        if (state.useWorker) {
+            const ok = await tryFetch(`${WORKER_URL}/models`);
+            if (ok) { render(); return; }
+        }
+        if (state.apiKey) {
+            const ok = await tryFetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${state.apiKey}`);
+            if (ok) { render(); return; }
+        }
+    } catch (e) {
+        // fall through to default
+    }
+    if (status) status.textContent = state.useWorker ? '✅ 使用 Worker 代理（默认模型列表）' : '⚠️ 检测失败，使用默认列表';
+    state.modelChecked = true;
+    render();
+}
+
+function toggleTTS() {
+    state.ttsEnabled = !state.ttsEnabled;
+    render();
+}
+
+// ============================================================
+// TTS (Text-to-Speech) - Browser built-in
+// ============================================================
+let speechSynth = window.speechSynthesis;
+let currentUtterance = null;
+
+function speakText(text) {
+    if (!state.ttsEnabled || !text) return;
+    try {
+        // Cancel any ongoing speech
+        if (speechSynth.speaking) speechSynth.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        // Try to find a Chinese voice
+        const voices = speechSynth.getVoices();
+        const zhVoice = voices.find(v => v.lang.startsWith('zh-CN') || v.lang.startsWith('zh-TW') || v.lang.startsWith('zh'));
+        if (zhVoice) utterance.voice = zhVoice;
+
+        currentUtterance = utterance;
+        speechSynth.speak(utterance);
+    } catch(e) {
+        // TTS not available - silent fail
+    }
+}
+
+// Preload voices
+if (speechSynth) {
+    speechSynth.getVoices();
+    speechSynth.onvoiceschanged = () => speechSynth.getVoices();
+}
+
+// ============================================================
+// Modal
+// ============================================================
+function toggleModal(open) {
+    const modal = document.getElementById('guide-modal');
+    if (modal) {
+        if (open) modal.classList.add('open');
+        else modal.classList.remove('open');
+    }
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function(e) {
+    if (e.target.id === 'guide-modal') toggleModal(false);
+});
+
+// ============================================================
+// Initial Render
+// ============================================================
+render();
+</script>
+</body>
+</html>
