@@ -1,31 +1,34 @@
 // ==========================================
 // Cloudflare Worker — 马来亚1941 Gemini API 安全代理
-// 1. API Key 藏在 Worker 环境变量，学生无需手动输入
-// 2. CORS 白名单：仅放行 GitHub Pages 及本地调试
-// 部署: wrangler deploy (需先设置 GEMINI_API_KEY 环境变量)
+// 安全设计：
+//   1. API Key 仅存在于 Worker 环境变量 (env.GEMINI_API_KEY)，永不下发
+//   2. Key 只在服务端 → Google API 的 x-goog-api-key header 中使用
+//   3. CORS 白名单仅放行 GitHub Pages + 本地调试
+//   4. 浏览器永远看不到 Key，即使抓包也只能看到 Worker URL
+// 部署: npx wrangler deploy
+// Secret: npx wrangler secret put GEMINI_API_KEY
 // ==========================================
+
+// 简易速率计数器（同一 Worker 实例内有效，防脚本滥用）
+const rateMap = new Map();
 
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
 
-    // --- 安全验证：域名白名单 ---
+    // --- CORS 白名单 ---
     const isAllowed =
       origin === 'https://chewyenhan.github.io' ||
       origin.startsWith('http://localhost') ||
-      origin.startsWith('http://127.0.0.1') ||
-      origin === 'null' ||
-      origin === '';
+      origin.startsWith('http://127.0.0.1');
 
     if (!isAllowed) {
-      return new Response('CORS Blocked: Unauthorized Origin', {
-        status: 403,
-        headers: { 'Content-Type': 'text/plain' }
-      });
+      return new Response('CORS Blocked', { status: 403 });
     }
 
+    // CORS headers（必须在 OPTIONS 和实际响应前定义）
     const corsHeaders = {
-      'Access-Control-Allow-Origin': origin || '*',
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type'
     };
@@ -36,24 +39,48 @@ export default {
 
     const url = new URL(request.url);
 
-    // --- GET /models — 获取可用模型列表 ---
+    // --- GET /models ---
     if (url.pathname === '/models' && request.method === 'GET') {
-      const models = {
+      return new Response(JSON.stringify({
         models: [
           { name: 'models/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash (推荐)' },
-          { name: 'models/gemini-2.5-pro', displayName: 'Gemini 2.5 Pro' },
+          { name: 'models/gemini-2.5-pro',   displayName: 'Gemini 2.5 Pro' },
           { name: 'models/gemini-2.0-flash', displayName: 'Gemini 2.0 Flash' },
           { name: 'models/gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
-          { name: 'models/gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' }
+          { name: 'models/gemini-1.5-pro',   displayName: 'Gemini 1.5 Pro' }
         ]
-      };
-      return new Response(JSON.stringify(models), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // --- POST /gemini — 代理 Gemini API 调用 ---
+    // --- POST /gemini（带速率限制） ---
     if (url.pathname === '/gemini' && request.method === 'POST') {
+      // 速率限制：每 IP 每分钟最多 15 次
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const now = Date.now();
+      const windowMs = 60_000;
+      const maxReq = 15;
+
+      let entry = rateMap.get(ip);
+      if (!entry || (now - entry.resetAt) > windowMs) {
+        entry = { count: 0, resetAt: now + windowMs };
+        rateMap.set(ip, entry);
+      }
+
+      entry.count++;
+      if (entry.count > maxReq) {
+        return new Response(JSON.stringify({ error: '请求过于频繁，请稍后再试' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // 清理过期条目（每 100 次请求清理一次）
+      if (Math.random() < 0.01) {
+        for (const [k, v] of rateMap) {
+          if (now > v.resetAt) rateMap.delete(k);
+        }
+      }
+
       try {
         const body = await request.json();
         const model = body.model || 'gemini-2.5-flash';
@@ -63,6 +90,7 @@ export default {
         if (body.systemInstruction) geminiBody.systemInstruction = body.systemInstruction;
         if (body.generationConfig) geminiBody.generationConfig = body.generationConfig;
 
+        // Key 仅在此处使用，浏览器永远不可见
         const resp = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
