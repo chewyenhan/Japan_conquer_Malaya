@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>马来亚1941：抉择的十字路口</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #1a1a0f;
@@ -29,6 +32,7 @@
             background: var(--bg);
             color: var(--text);
             font-family: "Noto Serif SC", "SimSun", "STSong", Georgia, "Times New Roman", serif;
+            font-weight: 500;
             min-height: 100vh;
             line-height: 1.7;
             position: relative;
@@ -66,8 +70,8 @@
             border-bottom: 1px solid rgba(201,164,76,0.2);
             margin-bottom: 24px;
         }
-        .header h1 { color: var(--gold); font-size: 3.8em; letter-spacing: 0.06em; margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .header .subtitle { color: var(--text-dim); font-size: 1.4em; letter-spacing: 0.1em; }
+        .header h1 { color: var(--gold); font-size: 3.8em; font-weight: 900; letter-spacing: 0.06em; margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .header .subtitle { color: var(--text-dim); font-size: 1.4em; font-weight: 500; letter-spacing: 0.1em; }
 
         /* Panel system */
         .panel { display: none; flex: 1; }
@@ -89,8 +93,8 @@
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
         }
         .start-screen .icon-main { font-size: 6em; margin-bottom: 14px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
-        .start-screen h2 { color: var(--gold-light); font-size: 2.8em; margin-bottom: 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-        .start-screen .tagline { color: var(--text-dim); font-size: 1.4em; margin-bottom: 32px; }
+        .start-screen h2 { color: var(--gold-light); font-size: 2.8em; font-weight: 900; margin-bottom: 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .start-screen .tagline { color: var(--text-dim); font-size: 1.4em; font-weight: 500; margin-bottom: 32px; }
 
         /* Buttons */
         .btn {
@@ -156,7 +160,7 @@
             background: var(--panel);
             border-radius: 24px;
             border: 1px solid rgba(201,164,76,0.2);
-            font-size: 1.3em;
+            font-size: 1.3em; font-weight: 500;
             box-shadow: 0 8px 40px rgba(0,0,0,0.3);
         }
         .counter-row { display: flex; align-items: center; justify-content: center; gap: 28px; margin: 28px 0; }
@@ -179,9 +183,9 @@
         .group-tab {
             padding: 12px 24px; border-radius: 12px 12px 0 0; cursor: pointer;
             background: var(--card); color: var(--text-dim); border: 1px solid var(--border);
-            font-family: inherit; font-size: 1.1em; transition: all 0.2s;
+            font-family: inherit; font-size: 1.1em; font-weight: 600; transition: all 0.2s;
         }
-        .group-tab.active { background: var(--panel); color: var(--gold); border-bottom-color: var(--panel); font-weight: bold; border-top: 2px solid var(--gold); }
+        .group-tab.active { background: var(--panel); color: var(--gold); border-bottom-color: var(--panel); font-weight: 700; border-top: 2px solid var(--gold); }
         .group-tab.done::after { content: ' ✓'; color: #6aac46; }
 
         /* Game Panel */
@@ -205,12 +209,12 @@
         .game-header .level-badge {
             display: inline-block; padding: 6px 18px; border-radius: 20px;
             background: rgba(201,164,76,0.12); border: 1px solid rgba(201,164,76,0.4); color: var(--gold-light);
-            font-size: 0.95em; margin-bottom: 14px; letter-spacing: 0.04em;
+            font-size: 0.95em; font-weight: 600; margin-bottom: 14px; letter-spacing: 0.04em;
         }
-        .game-header .scene-title { color: var(--gold-light); font-size: 3.6em; margin-bottom: 6px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-        .game-header .scene-time { color: var(--text-dim); font-size: 1.5em; margin-bottom: 18px; }
+        .game-header .scene-title { color: var(--gold-light); font-size: 3.6em; font-weight: 900; margin-bottom: 6px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .game-header .scene-time { color: var(--text-dim); font-size: 1.5em; font-weight: 500; margin-bottom: 18px; }
         .game-header .scene-desc {
-            color: var(--text); font-size: 1.8em; line-height: 2.1;
+            color: var(--text); font-size: 1.8em; font-weight: 500; line-height: 2.1;
             padding: 24px 28px;
             background: linear-gradient(135deg, rgba(201,164,76,0.04) 0%, transparent 100%);
             border-radius: 12px;
@@ -227,7 +231,7 @@
             background: linear-gradient(135deg, var(--card) 0%, rgba(37,42,30,0.6) 100%);
             border: 2px solid var(--border); border-radius: 16px;
             cursor: pointer; transition: all 0.3s;
-            color: var(--text); font-family: inherit; font-size: 1.6em;
+            color: var(--text); font-family: inherit; font-size: 1.6em; font-weight: 600;
             position: relative; overflow: hidden;
         }
         .choice-card::after {
@@ -242,7 +246,7 @@
             flex-shrink: 0; width: 48px; height: 48px;
             border-radius: 50%; border: 2px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            color: var(--gold); font-weight: bold; font-size: 1.2em;
+            color: var(--gold); font-weight: 700; font-size: 1.2em;
             background: rgba(201,164,76,0.1);
         }
         .choice-card.locked { pointer-events: none; }
@@ -263,21 +267,21 @@
         }
         .analysis-box.visible { display: block; animation: fadeIn 0.5s; }
         .analysis-box h4 { color: var(--gold); font-size: 1.15em; margin-bottom: 8px; }
-        .analysis-box .analysis-text { color: var(--cream); font-size: 1.35em; line-height: 1.85; }
+        .analysis-box .analysis-text { color: var(--cream); font-size: 1.35em; font-weight: 500; line-height: 1.85; }
         .analysis-box .bookmark { display: inline-block; padding: 3px 12px; border-radius: 10px; background: rgba(201,164,76,0.12); color: var(--gold-light); font-size: 0.85em; margin-top: 10px; }
 
         /* Score Display */
         .score-bar-area { padding: 16px 36px 24px; display: none; }
         .score-bar-area.visible { display: block; }
         .score-row { display: flex; align-items: center; margin-bottom: 14px; gap: 14px; }
-        .score-row .score-label { min-width: 130px; font-size: 1.1em; color: var(--text-dim); text-align: right; }
+        .score-row .score-label { min-width: 130px; font-size: 1.1em; color: var(--text-dim); text-align: right; font-weight: 600; }
         .score-row .score-track { flex: 1; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
         .score-row .score-fill { height: 100%; border-radius: 7px; transition: width 0.8s ease-out; position: relative; }
         .score-row .score-fill::after { content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.25); }
         .score-fill.independence { background: linear-gradient(90deg, #3a6c36, #5ac44a); box-shadow: 0 0 10px rgba(74,124,70,0.3); }
         .score-fill.cost { background: linear-gradient(90deg, #c9a44c, #c0392b); box-shadow: 0 0 10px rgba(192,57,43,0.3); }
         .score-fill.trust { background: linear-gradient(90deg, #4a6a8a, #bc002d); box-shadow: 0 0 10px rgba(188,0,45,0.3); }
-        .score-row .score-val { font-size: 1.1em; color: var(--text); min-width: 44px; font-weight: bold; }
+        .score-row .score-val { font-size: 1.1em; color: var(--text); min-width: 44px; font-weight: 700; }
 
         /* Level Navigation */
         .level-nav { padding: 0 36px 28px; display: flex; justify-content: space-between; gap: 14px; align-items: center; }
@@ -301,27 +305,27 @@
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
         }
         .ending-screen .ending-icon { font-size: 5em; margin-bottom: 16px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
-        .ending-screen h2 { color: var(--gold-light); font-size: 2.8em; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-        .ending-screen .ending-type { font-size: 1.6em; color: var(--cream); margin-bottom: 20px; }
+        .ending-screen h2 { color: var(--gold-light); font-size: 2.8em; font-weight: 900; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .ending-screen .ending-type { font-size: 1.6em; font-weight: 600; color: var(--cream); margin-bottom: 20px; }
         .ending-screen .ending-desc {
             max-width: 750px; margin: 0 auto 28px; line-height: 2.1;
             padding: 28px; background: linear-gradient(135deg, rgba(201,164,76,0.06) 0%, var(--card) 100%);
-            border-radius: 14px; font-size: 1.55em; border: 1px solid rgba(201,164,76,0.2);
+            border-radius: 14px; font-size: 1.55em; font-weight: 500; border: 1px solid rgba(201,164,76,0.2);
         }
 
         /* Review Cards */
         .review-section { margin: 28px auto; max-width: 750px; text-align: left; }
-        .review-section h3 { color: var(--gold); text-align: center; margin-bottom: 22px; font-size: 1.9em; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        .review-section h3 { color: var(--gold); text-align: center; margin-bottom: 22px; font-size: 1.9em; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
         .review-card {
             padding: 18px 24px; margin-bottom: 14px;
             background: linear-gradient(135deg, rgba(201,164,76,0.04) 0%, var(--card) 100%);
             border-radius: 10px; border-left: 4px solid var(--gold);
-            font-size: 1.35em; line-height: 1.7;
+            font-size: 1.35em; font-weight: 500; line-height: 1.7;
             transition: transform 0.2s;
         }
         .review-card:hover { transform: translateX(4px); }
-        .review-card .rc-point { color: var(--gold-light); font-weight: bold; }
-        .review-card .rc-detail { color: var(--text-dim); margin-top: 8px; }
+        .review-card .rc-point { color: var(--gold-light); font-weight: 700; }
+        .review-card .rc-detail { color: var(--text-dim); margin-top: 8px; font-weight: 500; }
 
         /* Modal */
         .modal-overlay {
@@ -335,8 +339,8 @@
             padding: 36px; max-width: 700px; max-height: 80vh; overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.6);
         }
-        .modal-content h3 { color: var(--gold); font-size: 1.4em; margin-bottom: 16px; }
-        .modal-content p, .modal-content li { color: var(--text); font-size: 1.1em; margin-bottom: 10px; }
+        .modal-content h3 { color: var(--gold); font-size: 1.4em; font-weight: 700; margin-bottom: 16px; }
+        .modal-content p, .modal-content li { color: var(--text); font-size: 1.1em; font-weight: 500; margin-bottom: 10px; }
         .modal-content hr { border-color: rgba(201,164,76,0.2); margin: 20px 0; }
 
         /* Toast */
