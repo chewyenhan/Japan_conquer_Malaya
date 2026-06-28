@@ -673,17 +673,13 @@ function render() {
     // Settings
     html += `<div class="settings-box${state.settingsOpen ? ' open' : ''}" id="settings-box">`;
     html += `<div style="background:rgba(74,124,70,0.15);border:1px solid rgba(74,124,70,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.95em;color:#6aac46;">`;
-    html += `✅ <b>Worker 代理模式</b> — AI 分析已内置，无需输入 API Key 即可使用</div>`;
-    html += `<label>🔑 自定义 API Key（可选，留空则使用内置代理）</label>`;
-    html += `<div class="settings-row"><input type="password" id="api-key-input" value="${escHtml(state.apiKey)}" placeholder="输入你自己的 Gemini API Key（可选）...">`;
-    html += `<button class="btn btn-sm" onclick="saveApiKey()">保存</button></div>`;
-    html += `<div style="font-size:0.8em;color:var(--text-dim);margin-top:4px;">留空 = 使用内置 Cloudflare Worker 代理（推荐）| 填写 = 使用你自己的 Key</div>`;
+    html += `✅ <b>Worker 代理模式</b> — AI 分析通过 Cloudflare Worker 自动中转，无需任何配置</div>`;
     html += `<label>🤖 AI 模型</label>`;
     html += `<div class="settings-row"><select id="model-select">`;
     state.availableModels.forEach(m => {
         html += `<option value="${m}"${m === state.selectedModel ? ' selected' : ''}>${m}</option>`;
     });
-    html += `</select><button class="btn btn-sm" onclick="detectModels()">检测模型</button></div>`;
+    html += `</select><button class="btn btn-sm" onclick="detectModels()">检测可用模型</button></div>`;
     html += `<div id="model-status" style="font-size:0.85em;color:var(--text-dim);margin-top:4px;"></div>`;
     html += `<label style="margin-top:12px;">📣 语音朗读 <input type="checkbox" id="tts-toggle"${state.ttsEnabled ? ' checked' : ''} onchange="toggleTTS()"></label>`;
     html += `</div>`;
@@ -1083,36 +1079,19 @@ ${TEXTBOOK}
 
 现在请输出分析：`;
 
-    // Try Worker proxy first (no API key needed), then direct API, then fallback
+    // Use Worker proxy — if it fails, fall back to pre-written analysis
     try {
-        let resp, data;
+        const resp = await fetch(`${WORKER_URL}/gemini`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: state.selectedModel,
+                contents: [{ parts: [{ text: userMessage }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
+            })
+        });
 
-        if (!state.apiKey && state.useWorker) {
-            // Use Cloudflare Worker proxy — no student API key required
-            resp = await fetch(`${WORKER_URL}/gemini`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: state.selectedModel,
-                    contents: [{ parts: [{ text: userMessage }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-                })
-            });
-        } else if (state.apiKey) {
-            // Use direct Gemini API (for local dev with own key)
-            resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${state.selectedModel}:generateContent?key=${state.apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: userMessage }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-                })
-            });
-        } else {
-            throw new Error('No API key and worker disabled');
-        }
-
-        data = await resp.json();
+        const data = await resp.json();
 
         if (data.candidates && data.candidates[0]) {
             const aiText = data.candidates[0].content.parts[0].text.trim();
@@ -1216,17 +1195,12 @@ function toggleSettings() {
     render();
 }
 
-function saveApiKey() {
-    const input = document.getElementById('api-key-input');
-    if (input) {
-        state.apiKey = input.value.trim();
-        localStorage.setItem('malaya_api_key', state.apiKey);
-        showToast(state.apiKey ? '✅ API Key 已保存' : 'API Key 已清除（将使用预写分析）');
-    }
+function saveModel() {
     const select = document.getElementById('model-select');
     if (select) {
         state.selectedModel = select.value;
         localStorage.setItem('malaya_model', state.selectedModel);
+        showToast(`✅ 模型已切换至 ${state.selectedModel}`);
     }
 }
 
@@ -1262,18 +1236,12 @@ async function detectModels() {
     };
 
     try {
-        if (state.useWorker) {
-            const ok = await tryFetch(`${WORKER_URL}/models`);
-            if (ok) { render(); return; }
-        }
-        if (state.apiKey) {
-            const ok = await tryFetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${state.apiKey}`);
-            if (ok) { render(); return; }
-        }
+        const ok = await tryFetch(`${WORKER_URL}/models`);
+        if (ok) { render(); return; }
     } catch (e) {
         // fall through to default
     }
-    if (status) status.textContent = state.useWorker ? '✅ 使用 Worker 代理（默认模型列表）' : '⚠️ 检测失败，使用默认列表';
+    if (status) status.textContent = '⚠️ Worker 连接失败，使用默认模型列表';
     state.modelChecked = true;
     render();
 }
