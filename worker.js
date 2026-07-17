@@ -91,19 +91,29 @@ export default {
         if (body.generationConfig) geminiBody.generationConfig = body.generationConfig;
 
         // Key 仅在此处使用，浏览器永远不可见
-        const resp = await fetch(
+        // --- 双 Key 阶梯：免费 Key 优先，失败自动换付费 Key 重试 ---
+        const callGemini = (apiKey) => fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-goog-api-key': env.GEMINI_API_KEY
+              'x-goog-api-key': apiKey
             },
             body: JSON.stringify(geminiBody)
           }
         );
 
-        return new Response(await resp.text(), {
+        let resp = await callGemini(env.GEMINI_API_KEY);
+        let respText = await resp.text();
+
+        // 免费档失败（地区限制 400 / 配额限流 429 等）→ 付费 Key 兜底重试一次
+        if (!resp.ok && env.GEMINI_API_KEY_PAID) {
+          resp = await callGemini(env.GEMINI_API_KEY_PAID);
+          respText = await resp.text();
+        }
+
+        return new Response(respText, {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } catch (e) {
