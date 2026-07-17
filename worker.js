@@ -43,11 +43,7 @@ export default {
     if (url.pathname === '/models' && request.method === 'GET') {
       return new Response(JSON.stringify({
         models: [
-          { name: 'models/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash (推荐)' },
-          { name: 'models/gemini-2.5-pro',   displayName: 'Gemini 2.5 Pro' },
-          { name: 'models/gemini-2.0-flash', displayName: 'Gemini 2.0 Flash' },
-          { name: 'models/gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
-          { name: 'models/gemini-1.5-pro',   displayName: 'Gemini 1.5 Pro' }
+          { name: 'models/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash (推荐)' }
         ]
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -83,7 +79,8 @@ export default {
 
       try {
         const body = await request.json();
-        const model = body.model || 'gemini-2.5-flash';
+        // 模型锁定：只有 2.5-flash 有免费档（2.5-pro / 2.0-flash 免费额度=0，会 100% 掉进付费兜底）
+        const model = 'gemini-2.5-flash';
 
         const geminiBody = {};
         if (body.contents) geminiBody.contents = body.contents;
