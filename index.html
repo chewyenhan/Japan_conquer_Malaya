@@ -620,7 +620,7 @@ const WORKER_URL = 'https://malaya1941-ai.chewyenhan.workers.dev';
 let state = {
     apiKey: localStorage.getItem('malaya_api_key') || '',
     selectedModel: localStorage.getItem('malaya_model') || 'gemini-3.5-flash-lite',
-    availableModels: ['gemini-3.5-flash-lite'],
+    availableModels: ['gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
     modelChecked: false,
     useWorker: true,  // 优先使用 Worker 代理（无需学生输入 Key）
     groupCount: 1,
