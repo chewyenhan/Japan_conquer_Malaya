@@ -84,7 +84,14 @@ export default {
         const geminiBody = {};
         if (body.contents) geminiBody.contents = body.contents;
         if (body.systemInstruction) geminiBody.systemInstruction = body.systemInstruction;
-        if (body.generationConfig) geminiBody.generationConfig = body.generationConfig;
+        if (body.generationConfig) {
+          // Gemini 3.5 Flash Lite 不支持 temperature/top_p/top_k，过滤掉
+          const gc = { ...body.generationConfig };
+          delete gc.temperature;
+          delete gc.top_p;
+          delete gc.top_k;
+          geminiBody.generationConfig = gc;
+        }
 
         // Key 仅在此处使用，浏览器永远不可见
         const resp = await fetch(

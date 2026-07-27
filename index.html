@@ -619,8 +619,8 @@ const WORKER_URL = 'https://malaya1941-ai.chewyenhan.workers.dev';
 
 let state = {
     apiKey: localStorage.getItem('malaya_api_key') || '',
-    selectedModel: localStorage.getItem('malaya_model') || 'gemini-2.5-flash',
-    availableModels: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+    selectedModel: localStorage.getItem('malaya_model') || 'gemini-3.5-flash-lite',
+    availableModels: ['gemini-3.5-flash-lite'],
     modelChecked: false,
     useWorker: true,  // 优先使用 Worker 代理（无需学生输入 Key）
     groupCount: 1,
@@ -1222,7 +1222,6 @@ async function detectModels() {
         const data = await resp.json();
         if (data.models) {
             const models = data.models
-                .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
                 .map(m => m.name.replace('models/', ''));
             if (models.length > 0) {
                 state.availableModels = models;
