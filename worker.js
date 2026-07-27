@@ -43,7 +43,7 @@ export default {
     if (url.pathname === '/models' && request.method === 'GET') {
       return new Response(JSON.stringify({
         models: [
-          { name: 'models/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash (推荐)' }
+          { name: 'models/gemini-3.5-flash-lite', displayName: 'Gemini 3.5 Flash Lite (推荐)' }
         ]
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -79,8 +79,7 @@ export default {
 
       try {
         const body = await request.json();
-        // 模型锁定：只有 2.5-flash 有免费档（2.5-pro / 2.0-flash 免费额度=0，会 100% 掉进付费兜底）
-        const model = 'gemini-2.5-flash';
+        const model = 'gemini-3.5-flash-lite';
 
         const geminiBody = {};
         if (body.contents) geminiBody.contents = body.contents;
@@ -88,27 +87,18 @@ export default {
         if (body.generationConfig) geminiBody.generationConfig = body.generationConfig;
 
         // Key 仅在此处使用，浏览器永远不可见
-        // --- 双 Key 阶梯：免费 Key 优先，失败自动换付费 Key 重试 ---
-        const callGemini = (apiKey) => fetch(
+        const resp = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey
+              'x-goog-api-key': env.GEMINI_API_KEY
             },
             body: JSON.stringify(geminiBody)
           }
         );
-
-        let resp = await callGemini(env.GEMINI_API_KEY);
-        let respText = await resp.text();
-
-        // 免费档失败（地区限制 400 / 配额限流 429 等）→ 付费 Key 兜底重试一次
-        if (!resp.ok && env.GEMINI_API_KEY_PAID) {
-          resp = await callGemini(env.GEMINI_API_KEY_PAID);
-          respText = await resp.text();
-        }
+        const respText = await resp.text();
 
         return new Response(respText, {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
