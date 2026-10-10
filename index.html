@@ -1087,7 +1087,7 @@ ${TEXTBOOK}
             body: JSON.stringify({
                 model: state.selectedModel,
                 contents: [{ parts: [{ text: userMessage }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
+                generationConfig: { maxOutputTokens: 2000 }
             })
         });
 
